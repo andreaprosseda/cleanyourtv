@@ -1947,6 +1947,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         line.append(part);
     }
 
+    /** Local: true while any VPN network is up. */
+    private boolean vpnUp() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return false;
+            for (Network net : cm.getAllNetworks()) {
+                NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+                if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
     private String readStatsLine() {
         int cpu = cpuPercent();
         if (cpu < 0) {
@@ -1964,8 +1978,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (cpu >= 0) line.append(getString(R.string.stats_cpu, cpu));
         long[] mem = memUsedOfTotalMb();
         if (mem != null) appendStat(line, getString(R.string.stats_memory, mem[0], mem[1]));
-        String free = formatGb(getResources(), Environment.getDataDirectory().getFreeSpace());
-        if (!free.isEmpty()) appendStat(line, getString(R.string.stats_storage, free));
+        // Local: VPN state in place of free storage.
+        appendStat(line, getString(vpnUp() ? R.string.stats_vpn_on : R.string.stats_vpn_off));
         return StatsText.forLocale(line.toString(), getResources().getConfiguration().getLocales().get(0));
     }
 
